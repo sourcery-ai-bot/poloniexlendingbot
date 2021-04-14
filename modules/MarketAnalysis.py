@@ -7,7 +7,7 @@ try:
     import numpy
     use_numpy = True
 except ImportError as ex:
-    ex.message = ex.message if ex.message else str(ex)
+    ex.message = ex.message or str(ex)
     print("WARN: Module Numpy not found, using manual percentile method instead. "
           "It is recommended to install Numpy. Error: {0}".format(ex.message))
     use_numpy = False
@@ -54,7 +54,7 @@ def update_market_loop():
             update_markets()
             delete_old_data()
         except Exception as ex:
-            ex.message = ex.message if ex.message else str(ex)
+            ex.message = ex.message or str(ex)
             print("Error in MarketAnalysis: {0}".format(ex.message))
         time.sleep(update_interval)
 
@@ -86,8 +86,7 @@ def delete_old_data():
 def get_day_difference(date_time):  # Will be in format '%Y-%m-%d %H:%M:%S'
     date1 = datetime.datetime.strptime(date_time, '%Y-%m-%d %H:%M:%S')
     now = datetime.datetime.now()
-    diff_days = (now - date1).days
-    return diff_days
+    return (now - date1).days
 
 
 def get_rate_list(cur='all'):
@@ -96,9 +95,7 @@ def get_rate_list(cur='all'):
         for cur in open_files:
             with open(open_files[cur], 'r') as f:
                 reader = csv.reader(f)
-                rates = []
-                for row in reader:
-                    rates.append(row[1])
+                rates = [row[1] for row in reader]
                 rates = map(float, rates)
                 all_rates[cur] = rates
         return all_rates
@@ -108,9 +105,7 @@ def get_rate_list(cur='all'):
             return []
         with open(open_files[cur], 'r') as f:
             reader = csv.reader(f)
-            rates = []
-            for row in reader:
-                rates.append(row[1])
+            rates = [row[1] for row in reader]
             rates = map(float, rates)
         return rates
 

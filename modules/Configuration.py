@@ -72,20 +72,19 @@ def get_coin_cfg():
                                         maxtolend=Decimal(cur[3]), maxpercenttolend=(Decimal(cur[4])) / 100,
                                         maxtolendrate=(Decimal(cur[5])) / 100)
         except Exception as ex:
-            ex.message = ex.message if ex.message else str(ex)
+            ex.message = ex.message or str(ex)
             print("Coinconfig parsed incorrectly, please refer to the documentation. Error: {0}".format(ex.message))
     else:
         for cur in FULL_LIST:
             if config.has_section(cur):
                 try:
-                    coin_cfg[cur] = {}
-                    coin_cfg[cur]['minrate'] = (Decimal(config.get(cur, 'mindailyrate'))) / 100
+                    coin_cfg[cur] = {'minrate': (Decimal(config.get(cur, 'mindailyrate'))) / 100}
                     coin_cfg[cur]['maxactive'] = Decimal(config.get(cur, 'maxactiveamount'))
                     coin_cfg[cur]['maxtolend'] = Decimal(config.get(cur, 'maxtolend'))
                     coin_cfg[cur]['maxpercenttolend'] = (Decimal(config.get(cur, 'maxpercenttolend'))) / 100
                     coin_cfg[cur]['maxtolendrate'] = (Decimal(config.get(cur, 'maxtolendrate'))) / 100
                 except Exception as ex:
-                    ex.message = ex.message if ex.message else str(ex)
+                    ex.message = ex.message or str(ex)
                     print("Coinconfig for " + cur + " parsed incorrectly, please refer to the documentation. "
                           "Error: {0}".format(ex.message))
                     # Need to raise this exception otherwise the bot will continue if you configured one cur correctly
@@ -100,7 +99,7 @@ def get_min_loan_sizes():
             try:
                 min_loan_sizes[cur] = Decimal(get(cur, 'minloansize', lower_limit=0.01))
             except Exception as ex:
-                ex.message = ex.message if ex.message else str(ex)
+                ex.message = ex.message or str(ex)
                 print("minloansize for " + cur + " parsed incorrectly, please refer to the documentation. "
                       "Error: {0}".format(ex.message))
                 # Bomb out if something isn't configured correctly
@@ -109,22 +108,21 @@ def get_min_loan_sizes():
 
 
 def get_currencies_list(option):
-    if config.has_option("BOT", option):
-        full_list = ['STR', 'BTC', 'BTS', 'CLAM', 'DOGE', 'DASH', 'LTC', 'MAID', 'XMR', 'XRP', 'ETH', 'FCT']
-        cur_list = []
-        raw_cur_list = config.get("BOT", option).split(",")
-        for raw_cur in raw_cur_list:
-            cur = raw_cur.strip(' ').upper()
-            if cur == 'ALL':
-                return full_list
-            elif cur == 'ACTIVE':
-                cur_list += Data.get_lending_currencies()
-            else:
-                if cur in full_list:
-                    cur_list.append(cur)
-        return list(set(cur_list))
-    else:
+    if not config.has_option("BOT", option):
         return []
+    full_list = ['STR', 'BTC', 'BTS', 'CLAM', 'DOGE', 'DASH', 'LTC', 'MAID', 'XMR', 'XRP', 'ETH', 'FCT']
+    cur_list = []
+    raw_cur_list = config.get("BOT", option).split(",")
+    for raw_cur in raw_cur_list:
+        cur = raw_cur.strip(' ').upper()
+        if cur == 'ALL':
+            return full_list
+        elif cur == 'ACTIVE':
+            cur_list += Data.get_lending_currencies()
+        else:
+            if cur in full_list:
+                cur_list.append(cur)
+    return list(set(cur_list))
 
 
 def get_notification_config():

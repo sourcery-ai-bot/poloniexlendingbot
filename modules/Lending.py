@@ -198,8 +198,7 @@ def get_min_daily_rate(cur):
             log.log('Using custom mindailyrate ' + str(coin_cfg[cur]['minrate'] * 100) + '% for ' + cur)
     if Analysis:
         recommended_min = Analysis.get_rate_suggestion(cur)
-        if cur_min_daily_rate < recommended_min:
-            cur_min_daily_rate = recommended_min
+        cur_min_daily_rate = max(cur_min_daily_rate, recommended_min)
     return Decimal(cur_min_daily_rate)
 
 
@@ -226,13 +225,16 @@ def get_gap_rate(active_cur, gap_pct, order_book, cur_active_bal):
     i = -1
     while gap_sum < gap_expected:
         i += 1
-        if i == len(order_book['volumes']) and len(order_book['volumes']) == loanOrdersRequestLimit[active_cur]:
+        if i == len(order_book['volumes']):
+            if (
+                len(order_book['volumes'])
+                != loanOrdersRequestLimit[active_cur]
+            ):
+                return max_daily_rate
             loanOrdersRequestLimit[active_cur] += defaultLoanOrdersRequestLimit
             log.log(active_cur + ': Not enough offers in response, adjusting request limit to ' + str(
                 loanOrdersRequestLimit[active_cur]))
             raise StopIteration
-        elif i == len(order_book['volumes']):
-            return max_daily_rate
         gap_sum += float(order_book['volumes'][i])
     return Decimal(order_book['rates'][i])
 
@@ -252,28 +254,20 @@ def construct_orders(cur, cur_active_bal):
     top_rate = get_gap_rate(cur, gap_top, order_book, cur_active_bal)
 
     gap_diff = top_rate - bottom_rate
-    if cur_spread == 1:
-        rate_step = 0
-    else:
-        rate_step = gap_diff / (cur_spread - 1)
-
+    rate_step = 0 if cur_spread == 1 else gap_diff / (cur_spread - 1)
     order_rates = []
-    i = 0
-    while i < cur_spread:
+    for i in range(cur_spread):
         new_rate = bottom_rate + (rate_step * i)
         order_rates.append(new_rate)
-        i += 1
     # Condensing and logic'ing time
     for rate in order_rates:
         if rate > max_daily_rate:
             order_rates[rate] = max_daily_rate
     new_order_rates = sorted(list(set(order_rates)))
     new_order_amounts = []
-    i = 0
-    while i < len(new_order_rates):
+    for _ in range(len(new_order_rates)):
         new_amount = Data.truncate(cur_active_bal / len(new_order_rates), 8)
         new_order_amounts.append(Decimal(new_amount))
-        i += 1
     remainder = cur_active_bal - sum(new_order_amounts)
     if remainder > 0:  # If truncating causes remainder, add that to first order.
         new_order_amounts[0] += remainder

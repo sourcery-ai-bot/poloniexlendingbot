@@ -21,12 +21,14 @@ def post_process(before):
     after = before
 
     # Add timestamps if there isnt one but is a datetime
-    if 'return' in after:
-        if isinstance(after['return'], list):
-            for x in xrange(0, len(after['return'])):
-                if isinstance(after['return'][x], dict):
-                    if 'datetime' in after['return'][x] and 'timestamp' not in after['return'][x]:
-                        after['return'][x]['timestamp'] = float(create_time_stamp(after['return'][x]['datetime']))
+    if 'return' in after and isinstance(after['return'], list):
+        for x in xrange(0, len(after['return'])):
+            if (
+                isinstance(after['return'][x], dict)
+                and 'datetime' in after['return'][x]
+                and 'timestamp' not in after['return'][x]
+            ):
+                after['return'][x]['timestamp'] = float(create_time_stamp(after['return'][x]['datetime']))
 
     return after
 

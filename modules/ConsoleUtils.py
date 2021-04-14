@@ -61,9 +61,8 @@ def _get_terminal_size_linux():
         try:
             import fcntl
             import termios
-            cr = struct.unpack('hh',
+            return struct.unpack('hh',
                                fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-            return cr
         except:
             pass
     cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
